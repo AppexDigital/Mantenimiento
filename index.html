@@ -36,6 +36,14 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Ajuste de visibilidad para botones de unidades activos */
+        .bg-plasma {
+            color: var(--c-plasma) !important;
+            background-color: rgba(0, 255, 204, 0.1) !important; /* Fondo sutil para resaltar el texto */
+            box-shadow: 0 0 10px var(--c-plasma);
+        }
+        
+
         .mobile-nav-container {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -331,8 +339,9 @@
             }
 
             document.getElementById('main-odometer').textContent = state.vehicle.km ? state.vehicle.km.toLocaleString() : '---';
-            document.getElementById('btn-km').className = `px-4 py-1 text-[9px] font-black rounded-full ${state.unit === 'KM' ? 'bg-plasma text-black shadow-[0_0_10px_#00ffcc]' : 'text-gray-500'}`;
-            document.getElementById('btn-ml').className = `px-4 py-1 text-[9px] font-black rounded-full ${state.unit === 'ML' ? 'bg-plasma text-black shadow-[0_0_10px_#00ffcc]' : 'text-gray-500'}`;
+            // Localiza estas líneas dentro de la función render() y realiza el cambio:
+            document.getElementById('btn-km').className = `px-4 py-1 text-[9px] font-black rounded-full ${state.unit === 'KM' ? 'bg-plasma shadow-[0_0_10px_#00ffcc]' : 'text-gray-500'}`;
+            document.getElementById('btn-ml').className = `px-4 py-1 text-[9px] font-black rounded-full ${state.unit === 'ML' ? 'bg-plasma shadow-[0_0_10px_#00ffcc]' : 'text-gray-500'}`;
 
             const cats = [...new Set(SCHEMA.map(i => i.cat))];
             const catsToShow = isMobile ? [state.activeTab] : cats;
@@ -408,5 +417,6 @@
     </script>
 </body>
 </html>
+
 
 
