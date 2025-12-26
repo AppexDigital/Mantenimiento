@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarCommand SN v10.0 - Absolute Command</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --c-void: #000000;
+            --c-plasma: #00ffcc;
+            --c-stellar: #7c3aed;
+            --c-critical: #ff0033;
+            --glass: rgba(8, 8, 12, 0.95);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--c-void);
+            color: #f8fafc;
+            background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .glass-obsidian {
+            background: var(--glass);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+        }
+
+        .plasma-text {
+            background: linear-gradient(90deg, #fff, var(--c-plasma));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes pulse-red { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .critical-pulse { animation: pulse-red 1.5s infinite; color: var(--c-critical); }
+
+        select, input, textarea {
+            background-color: #0a0a0a !important;
+            color: white !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            padding: 12px !important;
+        }
+        option { background-color: #0a0a0a; color: white; }
+
+        .btn-action {
+            color: white !important;
+            background: linear-gradient(135deg, var(--c-stellar), #5b21b6);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .component-card {
+            border-left: 4px solid var(--c-plasma);
+            transition: all 0.3s ease;
+        }
+        .component-card.is-critical { border-left-color: var(--c-critical); }
+
+        .status-fill { height: 100%; transition: width 1s ease-in-out; }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+
+    <div class="max-w-[1600px] mx-auto space-y-12">
+        
+        <header class="flex flex-col lg:flex-row justify-between items-start gap-10">
+            <div class="space-y-4">
+                <h1 class="text-6xl md:text-8xl font-orbitron font-black tracking-tighter plasma-text uppercase">
+                    CarCommand<span class="text-white opacity-20">SN</span>
+                </h1>
+                <p class="font-mono text-[9px] tracking-[0.8em] text-gray-600 uppercase">Universal Engine Sovereignty • v10.0</p>
+            </div>
+
+            <div class="glass-obsidian px-10 py-6 rounded-3xl border-t border-t-white/10 flex gap-10 items-center">
+                <div class="text-center">
+                    <p class="text-[9px] text-plasma font-bold uppercase tracking-widest mb-2">Lectura de Sensores</p>
+                    <div id="main-odometer" class="text-4xl font-orbitron font-bold text-white tracking-widest">---</div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button onclick="setUnit('KM')" id="btn-km" class="text-[10px] font-black border border-white/10 px-4 py-1 rounded-full">KM</button>
+                    <button onclick="setUnit('ML')" id="btn-ml" class="text-[10px] font-black border border-white/10 px-4 py-1 rounded-full">ML</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="glass-obsidian rounded-[3rem] p-10 grid grid-cols-1 xl:grid-cols-5 gap-12 border border-white/5">
+            <div class="xl:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Ecosistema Marca</label>
+                    <select id="v-brand" onchange="updateModels()" class="w-full rounded-2xl p-5 text-sm font-bold">
+                        <option value="">Seleccione Marca</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Módulo de Serie</label>
+                    <select id="v-model" class="w-full rounded-2xl p-5 text-sm font-bold">
+                        <option value="">Esperando Marca...</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Odómetro Consola</label>
+                    <input type="number" id="v-km" class="w-full rounded-2xl p-5 text-xl font-mono text-plasma">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Tracción</label>
+                    <select id="v-drive" class="w-full rounded-2xl p-5 text-sm font-bold">
+                        <option value="4x2">Sencilla (4x2)</option>
+                        <option value="4x4">All-Terrain (4x4)</option>
+                        <option value="awd">AWD (Inteligente)</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold text-gray-500 uppercase">Transmisión</label>
+                    <select id="v-trans" class="w-full rounded-2xl p-5 text-sm font-bold">
+                        <option value="manual">Manual (Stick)</option>
+                        <option value="auto">Automática (AT)</option>
+                        <option value="cvt">CVT (Poleas)</option>
+                        <option value="dsg">DSG / DCT (Doble)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="syncVehicle()" class="w-full btn-action py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Sincronizar Nave</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col justify-center space-y-4 border-l border-white/5 pl-10">
+                <p class="text-[9px] text-gray-600 font-bold uppercase">Integridad</p>
+                <div class="flex items-center gap-4">
+                    <h3 id="health-percent" class="text-5xl font-orbitron font-black text-white">0%</h3>
+                    <div id="health-indicator" class="w-4 h-4 rounded-full bg-gray-900"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="categories-container" class="space-y-24 pb-32"></div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/98 z-[100] hidden items-center justify-center p-4">
+        <div class="glass-obsidian max-w-5xl w-full rounded-[4rem] p-12 space-y-10 border border-white/5">
+            <div class="flex justify-between items-start border-b border-white/5 pb-8">
+                <div>
+                    <p id="modal-cat" class="text-[10px] text-plasma font-bold uppercase tracking-[0.4em] mb-2"></p>
+                    <h3 id="modal-title" class="text-4xl font-orbitron font-black text-white uppercase tracking-tighter"></h3>
+                </div>
+                <button onclick="closeModal()" class="text-white hover:text-plasma transition-colors"><i class="fas fa-times fa-3xl"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="space-y-8">
+                    <div>
+                        <h4 class="text-[10px] font-black text-plasma uppercase mb-4 tracking-widest">¿Para qué sirve?</h4>
+                        <p id="modal-desc" class="text-sm text-gray-400 leading-relaxed"></p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-black text-plasma uppercase mb-4 tracking-widest">Protocolo de Sustitución</h4>
+                        <p id="modal-how" class="text-sm text-gray-400 leading-relaxed"></p>
+                    </div>
+                </div>
+                
+                <div class="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Kilometraje</label>
+                            <input type="number" id="m-km" class="w-full rounded-2xl p-5 text-2xl font-mono text-plasma text-center">
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Fecha</label>
+                            <input type="date" id="m-date" class="w-full rounded-2xl p-5 text-center">
+                        </div>
+                    </div>
+                    <button onclick="confirmService()" class="w-full btn-action py-6 rounded-3xl font-black uppercase text-[11px] tracking-widest text-white">Ejecutar Intervención</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DATABASE = {
+            "Mitsubishi": ["Montero Sport", "L200 Triton", "Outlander", "Montero Limited", "ASX", "Pajero Full", "Eclipse Cross", "Lancer", "Mirage", "Xpander"],
+            "Toyota": ["Hilux", "Prado", "Land Cruiser 300", "Corolla", "Rav4", "4Runner", "Tacoma", "Tundra", "Yaris", "Fortuner", "Etios"],
+            "Nissan": ["Frontier", "Patrol", "X-Trail", "Qashqai", "Kicks", "Sentra", "Pathfinder", "Versa", "Terra", "370Z"],
+            "Ford": ["Ranger Raptor", "F-150", "Explorer", "Everest", "Mustang", "Bronco", "Territory", "Focus", "Fiesta", "Edge"],
+            "Hyundai": ["Tucson", "Santa Fe", "Palisade", "Creta", "Kona", "Elantra", "Accent", "H1", "Staria", "Venue"],
+            "Suzuki": ["Jimny", "Grand Vitara", "Swift", "S-Cross", "Baleno", "Ertiga", "Ignis", "Dzire"],
+            "Isuzu": ["D-Max", "MU-X", "NPR", "FTR", "NQR"],
+            "Mazda": ["BT-50", "CX-5", "CX-9", "CX-30", "Mazda 3", "Mazda 6", "MX-5"],
+            "BMW": ["X5", "X3", "X7", "Serie 3", "Serie 5", "Serie 1", "M4", "X1", "X6", "Serie 7"],
+            "Mercedes-Benz": ["Clase G", "GLE", "GLC", "Clase C", "Clase S", "Clase A", "Vito", "Sprinter", "AMG GT"]
+        };
+
+        const SCHEMA = [
+            // SOPORTE VITAL (FLUIDOS)
+            { id: 'oil', name: 'Aceite Motor Sintético', cat: 'Soporte Vital', km: 8000, months: 6, icon: 'fa-droplet', desc: 'Lubricante primario que mitiga la entropía térmica y fricción. Actúa como agente de enfriamiento secundario e inhibidor de corrosión.', how: 'Drenar fluido a temperatura de operación. Cambiar filtro y rellenar según viscosidad recomendada.' },
+            { id: 'brake_f', name: 'Líquido de Frenos', cat: 'Soporte Vital', km: 30000, months: 12, icon: 'fa-circle-dot', desc: 'Fluido higroscópico que absorbe humedad. El exceso de agua reduce el punto de ebullición, causando vapor lock.', how: 'Purgar el sistema desde el caliper más alejado. Extraer hasta que el fluido salga cristalino.' },
+            { id: 'coolant', name: 'Líquido Refrigerante', cat: 'Soporte Vital', km: 40000, months: 24, icon: 'fa-temperature-low', desc: 'Disipa calor y evita erosión galvánica en bomba y radiador.', how: 'Realizar flush completo de radiador y bloque. Rellenar con mezcla 50/50 desmineralizada.' },
+            { id: 'trans_f', name: 'Fluido Transmisión', cat: 'Soporte Vital', km: 60000, months: 36, icon: 'fa-gears', desc: 'Lubrica y enfría engranajes. En CVTs o DSGs el fluido es crítico para la fricción de bandas/embragues.', how: 'Drenar fluido, sustituir filtro interno y nivelar a la temperatura exacta especificada.' },
+            { id: 'diff', name: 'Aceite de Diferenciales', cat: 'Soporte Vital', km: 40000, months: 24, icon: 'fa-truck-monster', desc: 'Protege engranajes hipoides bajo presiones extremas.', how: 'Limpiar tapón magnético de virutas. Rellenar hasta el borde del tapón de inspección.' },
+            { id: 'transfer', name: 'Fluido Transfer Case', cat: 'Soporte Vital', km: 40000, months: 24, icon: 'fa-shuffle', drive: '4x4', desc: 'Lubrica cadenas y engranajes que distribuyen par entre ejes.', how: 'Vaciado por gravedad y llenado con fluido específico para cajas de transferencia.' },
+
+            // PLATAFORMA MOTRIZ
+            { id: 'timing', name: 'Kit de Distribución', cat: 'Plataforma Motriz', km: 100000, months: 60, icon: 'fa-ring', desc: 'Sincroniza pistones y válvulas. Un fallo en motores de interferencia destruye el bloque.', how: 'Sustituir correa/cadena, tensores, poleas y bomba de agua simultáneamente.' },
+            { id: 'u_joints', name: 'Engrase de Crucetas', cat: 'Plataforma Motriz', km: 10000, months: 6, icon: 'fa-cross', desc: 'Mantiene flexibilidad en el eje de transmisión y expulsa humedad.', how: 'Inyectar grasa de litio NGLI No. 2 por los niples (Zerks) hasta que la grasa vieja salga.' },
+            { id: 'clutch', name: 'Fluido de Embrague', cat: 'Plataforma Motriz', km: 30000, months: 12, icon: 'fa-clutch', trans: 'manual', desc: 'Fluido hidráulico para el accionamiento del embrague.', how: 'Purgar el cilindro esclavo para eliminar humedad y aire del circuito.' },
+
+            // ADMISIÓN Y COMBUSTIÓN
+            { id: 'spark', name: 'Bujías (Iridium)', cat: 'Admisión & Combustión', km: 50000, months: 36, icon: 'fa-bolt-lightning', desc: 'Genera el arco para combustión. Desgastadas causan pérdida de potencia y alto consumo.', how: 'Retirar bobinas, extraer bujías viejas y calibrar/instalar nuevas con torque preciso.' },
+            { id: 'air_f', name: 'Filtro de Aire Motor', cat: 'Admisión & Combustión', km: 20000, months: 12, icon: 'fa-wind', desc: 'Bloquea partículas abrasivas. Obstruido, altera la mezcla estequiométrica.', how: 'Sustituir el elemento. Limpiar caja de admisión de polvo acumulado.' },
+            { id: 'fuel_f', name: 'Filtro de Combustible', cat: 'Admisión & Combustión', km: 20000, months: 12, icon: 'fa-gas-pump', desc: 'Protege inyectores de contaminantes del tanque.', how: 'Despresurizar sistema, sustituir filtro y verificar sellado de líneas.' },
+            { id: 'valves', name: 'Limpieza GDI / Válvulas', cat: 'Admisión & Combustión', km: 40000, months: 24, icon: 'fa-volcano', desc: 'Elimina depósitos de carbón en válvulas de inyección directa.', how: 'Aplicar tratamiento químico descarbonizante por la admisión según protocolo.' },
+
+            // SEGURIDAD Y CHASIS
+            { id: 'tires', name: 'Rotación de Llantas', cat: 'Seguridad & Chasis', km: 10000, months: 6, icon: 'fa-arrows-spin', desc: 'Compensa desgaste irregular y maximiza vida útil de neumáticos.', how: 'Rotación cruzada y balanceo electrónico de las 4 ruedas.' },
+            { id: 'shocks', name: 'Amortiguadores', cat: 'Seguridad & Chasis', km: 60000, months: 48, icon: 'fa-arrows-up-down', desc: 'Absorben impactos y mantienen contacto neumático-asfalto.', how: 'Inspección de fugas de aceite y bujes. Sustitución en pares por eje.' },
+            { id: 'hoses', name: 'Mangueras (Caucho)', cat: 'Seguridad & Chasis', km: 80000, months: 48, icon: 'fa-hose', desc: 'Inspección de polimerización (grietas) por calor extremo.', how: 'Revisión visual y táctil. Sustitución si hay hinchazón o dureza excesiva.' },
+            { id: 'srs', name: 'Inspección SRS (Airbags)', cat: 'Seguridad & Chasis', km: 0, months: 12, icon: 'fa-person-burst', desc: 'Autodiagnóstico de ignitores pirotécnicos.', how: 'Verificar que el testigo de tablero se apague correctamente tras el arranque.' },
+            { id: 'battery', name: 'Prueba CCA Batería', cat: 'Seguridad & Chasis', km: 1, months: 12, icon: 'fa-car-battery', desc: 'Verificar capacidad de arranque en frío y carga de alternador.', how: 'Medición de voltaje en reposo y prueba de descarga bajo carga.' }
+        ];
+
+        let state = { unit: 'KM', vehicle: { brand: '', model: '', drive: '4x2', trans: 'manual', km: 0 }, history: {} };
+
+        function init() {
+            const saved = localStorage.getItem('carcommand_ultimate_v10');
+            if (saved) state = JSON.parse(saved);
+            
+            const bSel = document.getElementById('v-brand');
+            bSel.innerHTML = '<option value="">MARCA</option>' + Object.keys(DATABASE).sort().map(b => `<option value="${b}" ${b===state.vehicle.brand?'selected':''}>${b.toUpperCase()}</option>`).join('');
+            
+            if(state.vehicle.brand) updateModels();
+            document.getElementById('v-km').value = state.vehicle.km || '';
+            document.getElementById('v-drive').value = state.vehicle.drive;
+            document.getElementById('v-trans').value = state.vehicle.trans;
+            render();
+        }
+
+        function updateModels() {
+            const b = document.getElementById('v-brand').value;
+            if(!b) return;
+            document.getElementById('v-model').innerHTML = DATABASE[b].map(m => `<option value="${m}" ${m===state.vehicle.model?'selected':''}>${m.toUpperCase()}</option>`).join('');
+        }
+
+        function setUnit(u) { state.unit = u; render(); save(); }
+        function convert(v) { return state.unit === 'KM' ? v : Math.round(v * 0.621371); }
+
+        function syncVehicle() {
+            const b = document.getElementById('v-brand').value;
+            const m = document.getElementById('v-model').value;
+            const km = parseInt(document.getElementById('v-km').value) || 0;
+            if(!b || !m) return alert("Seleccione Marca y Modelo.");
+            state.vehicle = { brand: b, model: m, drive: document.getElementById('v-drive').value, trans: document.getElementById('v-trans').value, km: km };
+            save(); render();
+        }
+
+        function render() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+            if(!state.vehicle.brand) {
+                container.innerHTML = '<div class="text-center py-20 text-gray-700 font-orbitron">SINCRONICE SU NAVE PARA DESPLEGAR SISTEMAS</div>';
+                return;
+            }
+
+            document.getElementById('main-odometer').textContent = convert(state.vehicle.km).toLocaleString();
+            document.getElementById('btn-km').style.opacity = state.unit === 'KM' ? '1' : '0.4';
+            document.getElementById('btn-ml').style.opacity = state.unit === 'ML' ? '1' : '0.4';
+
+            let hSum = 0, hCount = 0;
+            const cats = [...new Set(SCHEMA.map(i => i.cat))];
+
+            cats.forEach(cat => {
+                const items = SCHEMA.filter(i => i.cat === cat);
+                let html = `<div class="space-y-10"><h2 class="text-[10px] font-orbitron text-stellar tracking-[0.6em] uppercase">${cat}</h2><div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">`;
+                
+                items.forEach(item => {
+                    if (item.drive && item.drive !== state.vehicle.drive && state.vehicle.drive !== 'awd') return;
+                    if (item.trans && item.trans !== state.vehicle.trans) return;
+
+                    const rec = state.history[item.id] || { km: 0, date: '2000-01-01' };
+                    const interval = item.km || 1;
+                    const nextKm = rec.km + interval;
+                    const remaining = nextKm - state.vehicle.km;
+                    const monthsDiff = dayjs().diff(dayjs(rec.date), 'month');
+                    const isCrit = remaining <= 0 || (item.months > 0 && monthsDiff >= item.months);
+                    const progress = Math.max(0, Math.min(100, ((state.vehicle.km - rec.km) / interval) * 100));
+
+                    hSum += (100 - progress); hCount++;
+
+                    html += `<div class="glass-obsidian p-8 rounded-[2.5rem] component-card ${isCrit ? 'is-critical' : ''} group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-plasma"><i class="fas ${item.icon} fa-2xl"></i></div>
+                            <button onclick="openModal('${item.id}')" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-plasma hover:text-black transition-all text-white"><i class="fas fa-plus text-xs"></i></button>
+                        </div>
+                        <h4 class="text-xs font-black uppercase mb-1 text-white">${item.name}</h4>
+                        <p class="text-[9px] text-gray-600 font-mono">LÍMITE: ${convert(nextKm).toLocaleString()} ${state.unit}</p>
+                        <div class="mt-8 space-y-3">
+                            <div class="flex justify-between text-[9px] font-bold"><span>${progress.toFixed(0)}%</span><span class="${isCrit ? 'text-red-600 critical-pulse' : 'text-gray-500'}">${isCrit ? 'CRÍTICO' : convert(remaining).toLocaleString() + ' REST'}</span></div>
+                            <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="status-fill" style="width: ${progress}%; background: ${isCrit ? '#ff0033' : '#00ffcc'}"></div></div>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML += html + '</div></div>';
+            });
+            
+            const totalH = Math.round(hSum / hCount) || 0;
+            document.getElementById('health-percent').textContent = `${totalH}%`;
+            document.getElementById('health-indicator').className = `w-4 h-4 rounded-full ${totalH < 50 ? 'bg-red-600 critical-pulse' : 'bg-plasma shadow-[0_0_15px_#00ffcc]'}`;
+        }
+
+        let activeId = null;
+        function openModal(id) {
+            activeId = id;
+            const item = SCHEMA.find(i => i.id === id);
+            document.getElementById('modal-title').textContent = item.name;
+            document.getElementById('modal-cat').textContent = item.cat;
+            document.getElementById('modal-desc').textContent = item.desc;
+            document.getElementById('modal-how').textContent = item.how;
+            document.getElementById('m-km').value = state.vehicle.km;
+            document.getElementById('m-date').value = dayjs().format('YYYY-MM-DD');
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        function confirmService() {
+            const km = parseInt(document.getElementById('m-km').value);
+            state.history[activeId] = { km, date: document.getElementById('m-date').value };
+            if(km > state.vehicle.km) state.vehicle.km = km;
+            save(); render(); closeModal();
+        }
+        function save() { localStorage.setItem('carcommand_ultimate_v10', JSON.stringify(state)); }
+        init();
+    </script>
+</body>
+</html>
